@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
-import type { ActionResult, Role, SharedProvider } from '@/types';
+import type { ActionResult, Role, SharedKeyWithProvider } from '@/types';
 
 export interface UserWithRole {
   id: string;
@@ -17,6 +17,15 @@ export interface MemberWithEmail {
   role: Role;
   email: string;
   created_at: string;
+}
+
+export interface ApiKeyWithProvider {
+  id: string;
+  label: string;
+  key_prefix: string | null;
+  provider_id: string;
+  provider_name: string;
+  sharedWith: string[];
 }
 
 /**
@@ -237,30 +246,32 @@ export const removeMember = async (userRoleId: string): Promise<ActionResult> =>
 };
 
 /**
- * Get providers shared with a specific user
+ * Get shared API keys for current user (member view)
  */
-export const getSharedProviders = async (userId?: string): Promise<SharedProvider[]> => {
+export const getSharedKeysForMember = async (): Promise<SharedKeyWithProvider[]> => {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  // If no userId provided, get shares for current user
-  const targetUserId = userId || user.id;
-
-  const { data } = await supabase
-    .from('shared_providers')
+  const { data, error } = await supabase
+    .from('shared_keys_with_provider')
     .select('*')
-    .eq('shared_with_user_id', targetUserId);
+    .order('tier_sort_order', { ascending: true, nullsFirst: false });
 
-  return data || [];
+  if (error) {
+    console.error('Error fetching shared keys:', error);
+    return [];
+  }
+
+  return (data as SharedKeyWithProvider[]) || [];
 };
 
 /**
- * Share a provider with a member (super admin only)
+ * Share an API key with a member (super admin only)
  */
-export const shareProvider = async (
-  providerId: string,
+export const shareApiKey = async (
+  apiKeyId: string,
   memberUserId: string
 ): Promise<ActionResult> => {
   const supabase = await createClient();
@@ -272,57 +283,57 @@ export const shareProvider = async (
 
   const isAdmin = await isSuperAdmin();
   if (!isAdmin) {
-    return { success: false, error: 'Only super admin can share providers' };
+    return { success: false, error: 'Only super admin can share API keys' };
   }
 
-  // Verify the provider belongs to the current user
-  const { data: provider } = await supabase
-    .from('providers')
+  // Verify the API key belongs to the current user
+  const { data: apiKey } = await supabase
+    .from('api_keys')
     .select('id')
-    .eq('id', providerId)
+    .eq('id', apiKeyId)
     .eq('owner_id', user.id)
+    .is('deleted_at', null)
     .single();
 
-  if (!provider) {
-    return { success: false, error: 'Provider not found or not owned by you' };
+  if (!apiKey) {
+    return { success: false, error: 'API key not found or not owned by you' };
   }
 
   // Check if already shared
   const { data: existingShare } = await supabase
-    .from('shared_providers')
+    .from('shared_api_keys')
     .select('id')
-    .eq('provider_id', providerId)
+    .eq('api_key_id', apiKeyId)
     .eq('shared_with_user_id', memberUserId)
     .single();
 
   if (existingShare) {
-    return { success: false, error: 'Provider already shared with this member' };
+    return { success: false, error: 'API key already shared with this member' };
   }
 
   // Create the share
   const { error } = await supabase
-    .from('shared_providers')
+    .from('shared_api_keys')
     .insert({
-      provider_id: providerId,
+      api_key_id: apiKeyId,
       shared_with_user_id: memberUserId,
       shared_by_user_id: user.id,
     });
 
   if (error) {
-    console.error('Error sharing provider:', error);
-    return { success: false, error: 'Failed to share provider' };
+    console.error('Error sharing API key:', error);
+    return { success: false, error: 'Failed to share API key' };
   }
 
   revalidatePath('/admin/sharing');
-  revalidatePath('/providers');
   return { success: true };
 };
 
 /**
- * Unshare a provider from a member (super admin only)
+ * Unshare an API key from a member (super admin only)
  */
-export const unshareProvider = async (
-  providerId: string,
+export const unshareApiKey = async (
+  apiKeyId: string,
   memberUserId: string
 ): Promise<ActionResult> => {
   const supabase = await createClient();
@@ -334,31 +345,34 @@ export const unshareProvider = async (
 
   const isAdmin = await isSuperAdmin();
   if (!isAdmin) {
-    return { success: false, error: 'Only super admin can unshare providers' };
+    return { success: false, error: 'Only super admin can unshare API keys' };
   }
 
   const { error } = await supabase
-    .from('shared_providers')
+    .from('shared_api_keys')
     .delete()
-    .eq('provider_id', providerId)
+    .eq('api_key_id', apiKeyId)
     .eq('shared_with_user_id', memberUserId)
     .eq('shared_by_user_id', user.id);
 
   if (error) {
-    console.error('Error unsharing provider:', error);
-    return { success: false, error: 'Failed to unshare provider' };
+    console.error('Error unsharing API key:', error);
+    return { success: false, error: 'Failed to unshare API key' };
   }
 
   revalidatePath('/admin/sharing');
-  revalidatePath('/providers');
   return { success: true };
 };
 
 /**
- * Get all sharing info for admin view
+ * Get all sharing info for admin view (API keys grouped by provider)
  */
 export const getSharingInfo = async (): Promise<{
-  providers: { id: string; name: string; sharedWith: string[] }[];
+  providers: {
+    id: string;
+    name: string;
+    apiKeys: ApiKeyWithProvider[];
+  }[];
   members: { id: string; email: string }[];
 }> => {
   const supabase = await createClient();
@@ -377,10 +391,18 @@ export const getSharingInfo = async (): Promise<{
     .is('deleted_at', null)
     .order('name');
 
+  // Get all API keys owned by admin
+  const { data: apiKeys } = await supabase
+    .from('api_keys')
+    .select('id, label, key_prefix, provider_id')
+    .eq('owner_id', user.id)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false });
+
   // Get all shares
   const { data: shares } = await supabase
-    .from('shared_providers')
-    .select('provider_id, shared_with_user_id')
+    .from('shared_api_keys')
+    .select('api_key_id, shared_with_user_id')
     .eq('shared_by_user_id', user.id);
 
   // Get member emails
@@ -399,19 +421,42 @@ export const getSharingInfo = async (): Promise<{
     ?.filter(u => memberUserIds.has(u.id))
     .map(u => ({ id: u.id, email: u.email || 'No email' })) || [];
 
-  // Build provider sharing info
+  // Build share map: api_key_id -> list of user_ids shared with
   const shareMap = new Map<string, string[]>();
   shares?.forEach(s => {
-    const existing = shareMap.get(s.provider_id) || [];
+    const existing = shareMap.get(s.api_key_id) || [];
     existing.push(s.shared_with_user_id);
-    shareMap.set(s.provider_id, existing);
+    shareMap.set(s.api_key_id, existing);
   });
 
-  const providersWithSharing = providers?.map(p => ({
-    id: p.id,
-    name: p.name,
-    sharedWith: shareMap.get(p.id) || [],
-  })) || [];
+  // Build provider name map
+  const providerNameMap = new Map(
+    providers?.map(p => [p.id, p.name]) || []
+  );
 
-  return { providers: providersWithSharing, members };
+  // Group API keys by provider
+  const providerKeysMap = new Map<string, ApiKeyWithProvider[]>();
+  apiKeys?.forEach(key => {
+    const providerKeys = providerKeysMap.get(key.provider_id) || [];
+    providerKeys.push({
+      id: key.id,
+      label: key.label,
+      key_prefix: key.key_prefix,
+      provider_id: key.provider_id,
+      provider_name: providerNameMap.get(key.provider_id) || 'Unknown',
+      sharedWith: shareMap.get(key.id) || [],
+    });
+    providerKeysMap.set(key.provider_id, providerKeys);
+  });
+
+  // Build final providers array
+  const providersWithKeys = providers
+    ?.filter(p => providerKeysMap.has(p.id))
+    .map(p => ({
+      id: p.id,
+      name: p.name,
+      apiKeys: providerKeysMap.get(p.id) || [],
+    })) || [];
+
+  return { providers: providersWithKeys, members };
 };

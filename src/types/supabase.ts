@@ -192,24 +192,24 @@ export interface Database {
           updated_at?: string;
         };
       };
-      shared_providers: {
+      shared_api_keys: {
         Row: {
           id: string;
-          provider_id: string;
+          api_key_id: string;
           shared_with_user_id: string;
           shared_by_user_id: string;
           created_at: string;
         };
         Insert: {
           id?: string;
-          provider_id: string;
+          api_key_id: string;
           shared_with_user_id: string;
           shared_by_user_id: string;
           created_at?: string;
         };
         Update: {
           id?: string;
-          provider_id?: string;
+          api_key_id?: string;
           shared_with_user_id?: string;
           shared_by_user_id?: string;
           created_at?: string;
@@ -246,6 +246,25 @@ export interface Database {
           created_at: string;
           updated_at: string;
           deleted_at: string | null;
+        };
+      };
+      shared_keys_with_provider: {
+        Row: {
+          api_key_id: string;
+          api_key_label: string;
+          key_prefix: string | null;
+          key_created_at: string;
+          provider_id: string;
+          provider_name: string;
+          website_url: string | null;
+          tier_id: string | null;
+          provider_remarks: string | null;
+          tier_name: string | null;
+          tier_label: string | null;
+          tier_color: string | null;
+          tier_sort_order: number | null;
+          shared_by_user_id: string;
+          shared_at: string;
         };
       };
     };
@@ -318,7 +337,9 @@ export type ProviderModelInsert = Database['public']['Tables']['provider_models'
 export type UserRole = Database['public']['Tables']['user_roles']['Row'];
 export type UserRoleInsert = Database['public']['Tables']['user_roles']['Insert'];
 
-export type SharedProvider = Database['public']['Tables']['shared_providers']['Row'];
-export type SharedProviderInsert = Database['public']['Tables']['shared_providers']['Insert'];
+export type SharedApiKey = Database['public']['Tables']['shared_api_keys']['Row'];
+export type SharedApiKeyInsert = Database['public']['Tables']['shared_api_keys']['Insert'];
+
+export type SharedKeyWithProvider = Database['public']['Views']['shared_keys_with_provider']['Row'];
 
 export type Role = 'super_admin' | 'member' | 'none';

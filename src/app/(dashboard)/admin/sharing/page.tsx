@@ -13,9 +13,9 @@ export default async function SharingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Provider Sharing</h1>
+        <h1 className="text-2xl font-bold">API Key Sharing</h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Control which providers are visible to members
+          Control which API keys are visible to members
         </p>
       </div>
 

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Server, ExternalLink, Gift, MoreVertical, Trash2, Edit, Eye } from 'lucide-react';
+import { Server, ExternalLink, Gift, MoreVertical, Trash2, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { deleteProvider } from '@/actions/providers';
@@ -12,10 +12,9 @@ import { useState } from 'react';
 interface ProviderCardProps {
   provider: Provider;
   tier?: Tier | null;
-  isReadOnly?: boolean;
 }
 
-export const ProviderCard = ({ provider, tier, isReadOnly = false }: ProviderCardProps) => {
+export const ProviderCard = ({ provider, tier }: ProviderCardProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -50,12 +49,6 @@ export const ProviderCard = ({ provider, tier, isReadOnly = false }: ProviderCar
               {tier && (
                 <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium ${tier.color}`}>
                   {tier.name}
-                </span>
-              )}
-              {isReadOnly && (
-                <span className="inline-flex items-center gap-1 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
-                  <Eye className="h-3 w-3" />
-                  Shared
                 </span>
               )}
             </div>
@@ -97,45 +90,43 @@ export const ProviderCard = ({ provider, tier, isReadOnly = false }: ProviderCar
           </div>
         </div>
 
-        {!isReadOnly && (
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setShowMenu(!showMenu)}
-            >
-              <MoreVertical className="h-4 w-4" />
-            </Button>
+        <div className="relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setShowMenu(!showMenu)}
+          >
+            <MoreVertical className="h-4 w-4" />
+          </Button>
 
-            {showMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
+          {showMenu && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setShowMenu(false)}
+              />
+              <div className="absolute right-0 top-8 z-20 w-36 rounded-md border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
+                <Link
+                  href={`/providers/${provider.id}/edit`}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   onClick={() => setShowMenu(false)}
-                />
-                <div className="absolute right-0 top-8 z-20 w-36 rounded-md border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
-                  <Link
-                    href={`/providers/${provider.id}/edit`}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                    onClick={() => setShowMenu(false)}
-                  >
-                    <Edit className="h-4 w-4" />
-                    Edit
-                  </Link>
-                  <button
-                    onClick={handleDelete}
-                    disabled={deleting}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    {deleting ? 'Deleting...' : 'Delete'}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit
+                </Link>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </CardHeader>
 
       <CardContent>

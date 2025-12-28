@@ -11,6 +11,7 @@ interface NavItem {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   adminOnly?: boolean;
+  memberOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -18,6 +19,7 @@ const navItems: NavItem[] = [
     href: '/providers',
     label: 'Providers',
     icon: Server,
+    adminOnly: true,
   },
   {
     href: '/tiers',
@@ -29,11 +31,19 @@ const navItems: NavItem[] = [
     href: '/api-keys',
     label: 'API Keys',
     icon: Key,
+    adminOnly: true,
   },
   {
     href: '/daily-rewards',
     label: 'Daily Rewards',
     icon: Gift,
+    adminOnly: true,
+  },
+  {
+    href: '/shared-keys',
+    label: 'Shared Keys',
+    icon: Share2,
+    memberOnly: true,
   },
 ];
 
@@ -59,6 +69,14 @@ interface SidebarProps {
 export const Sidebar = ({ role }: SidebarProps) => {
   const pathname = usePathname();
   const isSuperAdmin = role === 'super_admin';
+  const isMember = role === 'member';
+
+  // Filter nav items based on role
+  const filteredNavItems = navItems.filter((item) => {
+    if (item.adminOnly && !isSuperAdmin) return false;
+    if (item.memberOnly && !isMember) return false;
+    return true;
+  });
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -71,9 +89,7 @@ export const Sidebar = ({ role }: SidebarProps) => {
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 p-4">
-          {navItems
-            .filter((item) => !item.adminOnly || isSuperAdmin)
-            .map((item) => {
+          {filteredNavItems.map((item) => {
               const isActive = pathname.startsWith(item.href);
               const Icon = item.icon;
 

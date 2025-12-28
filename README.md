@@ -7,7 +7,7 @@ A secure, self-hosted application for managing AI provider API keys and tracking
 - **Secure API Key Storage** - Keys are encrypted at rest using Supabase Vault
 - **Provider Management** - Organize your AI providers with tiers and metadata
 - **Daily Reward Tracking** - Track and claim daily login rewards from providers
-- **Roles & Sharing** - Super Admin and Member roles with provider sharing
+- **Roles & Sharing** - Super Admin and Member roles with granular API key sharing
 - **Search & Filter** - Quickly find providers, tiers, and API keys
 - **Dark Mode** - Clean, minimalist UI with dark mode support
 - **Self-Hosted** - Your data stays on your own Supabase instance
@@ -68,6 +68,7 @@ Execute each migration file in order via the SQL Editor:
 4. `supabase/migrations/004_add_thread_url_and_tiers.sql` - Thread URL field
 5. `supabase/migrations/005_tiers_table.sql` - Tiers table
 6. `supabase/migrations/006_roles_and_sharing.sql` - User roles and provider sharing
+7. `supabase/migrations/007_api_key_sharing.sql` - Granular API key sharing
 
 ### 5. Configure Environment Variables
 
@@ -159,12 +160,17 @@ This is a one-time setup. The Super Admin role cannot be changed or overtaken.
 **Managing Members:**
 1. Go to **Admin** > **Members**
 2. Add members by their email (they must already have a Supabase user account)
-3. Members have read-only access to shared providers
+3. Members have read-only access to shared API keys
 
-**Sharing Providers:**
+**Sharing API Keys:**
 1. Go to **Admin** > **Sharing**
-2. Toggle checkboxes to share/unshare providers with members
-3. Shared providers appear in members' provider lists with a "Shared" badge
+2. API keys are grouped by provider with collapsible sections
+3. Toggle checkboxes to share/unshare individual API keys with members
+4. Members see shared keys in their **Shared Keys** page with:
+   - Provider name and website URL
+   - Tier badge
+   - Provider remarks (important context like "chat models only")
+   - Click to reveal key (auto-hides after 30s)
 
 ## Deployment
 
@@ -217,6 +223,7 @@ src/
 - **API keys are encrypted at rest** using Supabase Vault
 - **Row Level Security (RLS)** ensures users can only access their own data
 - **Role-based access control** - Super Admin and Member roles
+- **Granular API key sharing** - Share specific keys, not entire providers
 - **Super Admin immutability** - Cannot be changed or overtaken at database level
 - **Server-side validation** on all mutations
 - **Soft deletes** preserve data history
