@@ -7,6 +7,7 @@ A secure, self-hosted application for managing AI provider API keys and tracking
 - **Secure API Key Storage** - Keys are encrypted at rest using Supabase Vault
 - **Provider Management** - Organize your AI providers with tiers and metadata
 - **Daily Reward Tracking** - Track and claim daily login rewards from providers
+- **Roles & Sharing** - Super Admin and Member roles with provider sharing
 - **Search & Filter** - Quickly find providers, tiers, and API keys
 - **Dark Mode** - Clean, minimalist UI with dark mode support
 - **Self-Hosted** - Your data stays on your own Supabase instance
@@ -43,8 +44,9 @@ npm install
 
 1. Create a new project at [supabase.com](https://supabase.com)
 2. Wait for the project to provision (~2 minutes)
-3. Go to **Project Settings** > **API Keys** and note down:
+3. Go to **Project Settings** > **General** and note down:
    - Project URL: `https://<project-id>.supabase.co`
+4. Go to **Project Settings** > **API Keys** and note down:
    - Publishable key (anon key)
    - Secret key (service_role key)
 
@@ -65,6 +67,7 @@ Execute each migration file in order via the SQL Editor:
 3. `supabase/migrations/003_add_recharge_urls.sql` - Recharge URL fields
 4. `supabase/migrations/004_add_thread_url_and_tiers.sql` - Thread URL field
 5. `supabase/migrations/005_tiers_table.sql` - Tiers table
+6. `supabase/migrations/006_roles_and_sharing.sql` - User roles and provider sharing
 
 ### 5. Configure Environment Variables
 
@@ -105,6 +108,16 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) and sign in with your credentials.
 
+### 8. Initialize Super Admin Role
+
+The first user to sign in should initialize themselves as Super Admin:
+
+1. Sign in with your account
+2. Go to **Admin** > **Members** in the sidebar
+3. Click **Initialize as Super Admin**
+
+This is a one-time setup. The Super Admin role cannot be changed or overtaken.
+
 ## Usage
 
 ### Managing Providers
@@ -141,13 +154,27 @@ Open [http://localhost:3000](http://localhost:3000) and sign in with your creden
    - Color (Tailwind CSS classes)
 3. Or click **Seed Default Tiers** for S/A/B/C/D tiers
 
+### Roles & Sharing (Super Admin Only)
+
+**Managing Members:**
+1. Go to **Admin** > **Members**
+2. Add members by their email (they must already have a Supabase user account)
+3. Members have read-only access to shared providers
+
+**Sharing Providers:**
+1. Go to **Admin** > **Sharing**
+2. Toggle checkboxes to share/unshare providers with members
+3. Shared providers appear in members' provider lists with a "Shared" badge
+
 ## Deployment
 
 ### Deploy to Vercel
 
 1. Push your code to GitHub
 2. Import the project at [vercel.com](https://vercel.com)
-3. Add environment variables in **Settings** > **Environment Variables**
+3. Add environment variables:
+   - Option A: Import your `.env.local` file directly via **Settings** > **Environment Variables** > **Import**
+   - Option B: Add each variable manually in **Settings** > **Environment Variables**
 4. Deploy
 
 ### Configure Supabase for Production
@@ -171,6 +198,7 @@ src/
 ├── actions/          # Server Actions
 ├── app/              # Next.js App Router pages
 │   ├── (dashboard)/  # Authenticated routes
+│   │   └── admin/    # Admin-only routes
 │   └── api/          # API routes (cron jobs)
 ├── components/       # React components
 │   ├── ui/           # Reusable UI components
@@ -178,7 +206,8 @@ src/
 │   ├── providers/    # Provider-related components
 │   ├── tiers/        # Tier-related components
 │   ├── api-keys/     # API key components
-│   └── daily-rewards/# Daily rewards components
+│   ├── daily-rewards/# Daily rewards components
+│   └── admin/        # Admin components
 ├── lib/              # Utilities and Supabase clients
 └── types/            # TypeScript types
 ```
@@ -187,6 +216,8 @@ src/
 
 - **API keys are encrypted at rest** using Supabase Vault
 - **Row Level Security (RLS)** ensures users can only access their own data
+- **Role-based access control** - Super Admin and Member roles
+- **Super Admin immutability** - Cannot be changed or overtaken at database level
 - **Server-side validation** on all mutations
 - **Soft deletes** preserve data history
 - **No public signup** - users must be created by admin
@@ -207,14 +238,6 @@ npm run lint
 npx supabase gen types typescript --project-id YOUR_PROJECT_ID > src/types/supabase.ts
 ```
 
-## Documentation
-
-Detailed guides are available in the `docs/` folder:
-
-- [Supabase Setup Guide](docs/setup/SUPABASE_SETUP.md)
-- [Vercel Deployment Guide](docs/setup/VERCEL_DEPLOYMENT.md)
-- [Project Architecture](docs/architecture/project_overview.md)
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
@@ -222,3 +245,5 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
+
+This project is free and open source. You can use, modify, and distribute it however you want.
