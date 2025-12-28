@@ -52,6 +52,17 @@ export const RewardItem = ({ provider }: RewardItemProps) => {
               </div>
             </CardTitle>
             <div className="flex flex-wrap items-center gap-2">
+              {provider.website_url && (
+                <a
+                  href={provider.website_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Website
+                </a>
+              )}
               {provider.recharge_url && (
                 <a
                   href={provider.recharge_url}
@@ -59,7 +70,7 @@ export const RewardItem = ({ provider }: RewardItemProps) => {
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
                 >
-                  <ExternalLink className="h-3 w-3" />
+                  <Gift className="h-3 w-3" />
                   Recharge
                 </a>
               )}
@@ -70,19 +81,8 @@ export const RewardItem = ({ provider }: RewardItemProps) => {
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
                 >
-                  <ExternalLink className="h-3 w-3" />
+                  <Gift className="h-3 w-3" />
                   Recharge 2
-                </a>
-              )}
-              {!provider.recharge_url && !provider.recharge_url_2 && provider.website_url && (
-                <a
-                  href={provider.website_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  Visit site
                 </a>
               )}
             </div>

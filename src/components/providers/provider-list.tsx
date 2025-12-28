@@ -8,10 +8,12 @@ import type { Provider, Tier } from '@/types';
 interface ProviderListProps {
   providers: Provider[];
   tiers: Tier[];
+  sharedProviderIds?: string[];
 }
 
-export const ProviderList = ({ providers, tiers }: ProviderListProps) => {
+export const ProviderList = ({ providers, tiers, sharedProviderIds = [] }: ProviderListProps) => {
   const [search, setSearch] = useState('');
+  const sharedSet = new Set(sharedProviderIds);
 
   if (providers.length === 0) {
     return (
@@ -68,6 +70,7 @@ export const ProviderList = ({ providers, tiers }: ProviderListProps) => {
               key={provider.id}
               provider={provider}
               tier={provider.tier_id ? tierMap.get(provider.tier_id) : null}
+              isReadOnly={sharedSet.has(provider.id)}
             />
           ))}
         </div>

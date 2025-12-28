@@ -169,6 +169,52 @@ export interface Database {
           created_at?: string;
         };
       };
+      user_roles: {
+        Row: {
+          id: string;
+          user_id: string;
+          role: 'super_admin' | 'member';
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          role?: 'super_admin' | 'member';
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          role?: 'super_admin' | 'member';
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      shared_providers: {
+        Row: {
+          id: string;
+          provider_id: string;
+          shared_with_user_id: string;
+          shared_by_user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          provider_id: string;
+          shared_with_user_id: string;
+          shared_by_user_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          provider_id?: string;
+          shared_with_user_id?: string;
+          shared_by_user_id?: string;
+          created_at?: string;
+        };
+      };
     };
     Views: {
       active_providers: {
@@ -233,6 +279,24 @@ export interface Database {
         };
         Returns: boolean;
       };
+      is_super_admin: {
+        Args: {
+          check_user_id?: string;
+        };
+        Returns: boolean;
+      };
+      is_member: {
+        Args: {
+          check_user_id?: string;
+        };
+        Returns: boolean;
+      };
+      get_user_role: {
+        Args: {
+          check_user_id?: string;
+        };
+        Returns: string;
+      };
     };
   };
 }
@@ -250,3 +314,11 @@ export type ApiKeyInsert = Database['public']['Tables']['api_keys']['Insert'];
 
 export type ProviderModel = Database['public']['Tables']['provider_models']['Row'];
 export type ProviderModelInsert = Database['public']['Tables']['provider_models']['Insert'];
+
+export type UserRole = Database['public']['Tables']['user_roles']['Row'];
+export type UserRoleInsert = Database['public']['Tables']['user_roles']['Insert'];
+
+export type SharedProvider = Database['public']['Tables']['shared_providers']['Row'];
+export type SharedProviderInsert = Database['public']['Tables']['shared_providers']['Insert'];
+
+export type Role = 'super_admin' | 'member' | 'none';

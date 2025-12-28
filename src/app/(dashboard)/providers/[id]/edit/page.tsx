@@ -1,8 +1,9 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { getProvider } from '@/actions/providers';
 import { getTiers } from '@/actions/tiers';
+import { isSuperAdmin } from '@/actions/roles';
 import { ProviderForm } from '@/components/forms/provider-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +13,12 @@ interface EditProviderPageProps {
 }
 
 export default async function EditProviderPage({ params }: EditProviderPageProps) {
+  const isAdmin = await isSuperAdmin();
+
+  if (!isAdmin) {
+    redirect('/providers');
+  }
+
   const { id } = await params;
   const [provider, tiers] = await Promise.all([
     getProvider(id),

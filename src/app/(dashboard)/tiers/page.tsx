@@ -1,11 +1,20 @@
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { getTiers } from '@/actions/tiers';
+import { isSuperAdmin } from '@/actions/roles';
 import { Button } from '@/components/ui/button';
 import { TierList } from '@/components/tiers/tier-list';
 import { SeedTiersButton } from '@/components/tiers/seed-tiers-button';
 
 export default async function TiersPage() {
+  const isAdmin = await isSuperAdmin();
+
+  // Only super admin can manage tiers
+  if (!isAdmin) {
+    redirect('/providers');
+  }
+
   const tiers = await getTiers();
 
   return (
