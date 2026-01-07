@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { Server, ExternalLink, Gift, MoreVertical, Trash2, Edit } from 'lucide-react';
+import { Server, ExternalLink, Gift, MoreVertical, Trash2, Edit, Pause, Play, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { deleteProvider } from '@/actions/providers';
+import { Checkbox } from '@/components/ui/checkbox';
+import { deleteProvider, toggleProviderStatus } from '@/actions/providers';
 import { formatDate, isToday } from '@/lib/utils';
 import type { Provider, Tier } from '@/types';
 import { useState } from 'react';
@@ -12,11 +13,15 @@ import { useState } from 'react';
 interface ProviderCardProps {
   provider: Provider;
   tier?: Tier | null;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelectChange?: (selected: boolean) => void;
 }
 
-export const ProviderCard = ({ provider, tier }: ProviderCardProps) => {
+export const ProviderCard = ({ provider, tier, selectable, selected, onSelectChange }: ProviderCardProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [togglingStatus, setTogglingStatus] = useState(false);
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this provider?')) return;
@@ -25,15 +30,29 @@ export const ProviderCard = ({ provider, tier }: ProviderCardProps) => {
     setDeleting(false);
   };
 
+  const handleToggleStatus = async () => {
+    setTogglingStatus(true);
+    setShowMenu(false);
+    await toggleProviderStatus(provider.id, !provider.is_active);
+    setTogglingStatus(false);
+  };
+
   const rewardClaimedToday = provider.last_reward_claimed_at
     ? isToday(provider.last_reward_claimed_at)
     : false;
 
   return (
-    <Card className="group relative">
+    <Card className={`group relative ${!provider.is_active ? 'opacity-60' : ''}`}>
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
+          {selectable && (
+            <Checkbox
+              checked={selected}
+              onCheckedChange={(checked) => onSelectChange?.(checked === true)}
+              className="mt-1"
+            />
+          )}
+          <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${!provider.is_active ? 'bg-zinc-200 dark:bg-zinc-700' : 'bg-zinc-100 dark:bg-zinc-800'}`}>
             <Server className="h-5 w-5" />
           </div>
           <div>
@@ -46,6 +65,12 @@ export const ProviderCard = ({ provider, tier }: ProviderCardProps) => {
                   {provider.name}
                 </Link>
               </CardTitle>
+              {!provider.is_active && (
+                <span className="inline-flex items-center gap-1 rounded bg-zinc-200 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
+                  <Pause className="h-2.5 w-2.5" />
+                  Inactive
+                </span>
+              )}
               {tier && (
                 <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium ${tier.color}`}>
                   {tier.name}
@@ -61,7 +86,7 @@ export const ProviderCard = ({ provider, tier }: ProviderCardProps) => {
                   className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                 >
                   <ExternalLink className="h-3 w-3" />
-                  Website
+                  {new URL(provider.website_url).hostname.replace(/^www\./, '')}
                 </a>
               )}
               {provider.recharge_url && (
@@ -106,7 +131,7 @@ export const ProviderCard = ({ provider, tier }: ProviderCardProps) => {
                 className="fixed inset-0 z-10"
                 onClick={() => setShowMenu(false)}
               />
-              <div className="absolute right-0 top-8 z-20 w-36 rounded-md border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
+              <div className="absolute right-0 top-8 z-20 w-44 rounded-md border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
                 <Link
                   href={`/providers/${provider.id}/edit`}
                   className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
@@ -115,6 +140,23 @@ export const ProviderCard = ({ provider, tier }: ProviderCardProps) => {
                   <Edit className="h-4 w-4" />
                   Edit
                 </Link>
+                <button
+                  onClick={handleToggleStatus}
+                  disabled={togglingStatus}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                >
+                  {provider.is_active ? (
+                    <>
+                      <Pause className="h-4 w-4" />
+                      {togglingStatus ? 'Updating...' : 'Mark as Inactive'}
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4" />
+                      {togglingStatus ? 'Updating...' : 'Mark as Active'}
+                    </>
+                  )}
+                </button>
                 <button
                   onClick={handleDelete}
                   disabled={deleting}

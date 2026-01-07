@@ -66,6 +66,7 @@ export const createProvider = async (
   const rechargeUrl2 = formData.get('rechargeUrl2') as string;
   const remarks = formData.get('remarks') as string;
   const requiresDailyLogin = formData.get('requiresDailyLogin') === 'on';
+  const isActive = formData.get('isActive') !== 'off'; // Default to true if not specified
 
   if (!name?.trim()) {
     return { success: false, error: 'Provider name is required' };
@@ -81,6 +82,7 @@ export const createProvider = async (
     recharge_url_2: rechargeUrl2?.trim() || null,
     remarks: remarks?.trim() || null,
     requires_daily_login: requiresDailyLogin,
+    is_active: isActive,
   };
 
   const { data, error } = await supabase
@@ -118,6 +120,7 @@ export const updateProvider = async (
   const rechargeUrl2 = formData.get('rechargeUrl2') as string;
   const remarks = formData.get('remarks') as string;
   const requiresDailyLogin = formData.get('requiresDailyLogin') === 'on';
+  const isActive = formData.get('isActive') === 'on';
 
   if (!id) {
     return { success: false, error: 'Provider ID is required' };
@@ -138,6 +141,7 @@ export const updateProvider = async (
       recharge_url_2: rechargeUrl2?.trim() || null,
       remarks: remarks?.trim() || null,
       requires_daily_login: requiresDailyLogin,
+      is_active: isActive,
     })
     .eq('id', id)
     .select()
@@ -199,6 +203,52 @@ export const claimDailyReward = async (id: string): Promise<ActionResult> => {
   return { success: true };
 };
 
+export const toggleProviderStatus = async (id: string, isActive: boolean): Promise<ActionResult> => {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  const { error } = await supabase
+    .from('providers')
+    .update({ is_active: isActive })
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error toggling provider status:', error);
+    return { success: false, error: 'Failed to update provider status' };
+  }
+
+  revalidatePath('/providers');
+  revalidatePath('/daily-rewards');
+  return { success: true };
+};
+
+export const bulkUpdateProviderStatus = async (ids: string[], isActive: boolean): Promise<ActionResult> => {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: 'Not authenticated' };
+  }
+
+  const { error } = await supabase
+    .from('providers')
+    .update({ is_active: isActive })
+    .in('id', ids);
+
+  if (error) {
+    console.error('Error bulk updating provider status:', error);
+    return { success: false, error: 'Failed to update provider status' };
+  }
+
+  revalidatePath('/providers');
+  revalidatePath('/daily-rewards');
+  return { success: true };
+};
+
 export const getProvidersRequiringDailyLogin = async (): Promise<ProviderWithTier[]> => {
   const supabase = await createClient();
 
@@ -209,6 +259,7 @@ export const getProvidersRequiringDailyLogin = async (): Promise<ProviderWithTie
     .from('providers')
     .select('*, tier:tiers(*)')
     .eq('requires_daily_login', true)
+    .eq('is_active', true)
     .is('deleted_at', null);
 
   if (error) {

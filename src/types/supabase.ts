@@ -68,6 +68,7 @@ export interface Database {
           remarks: string | null;
           requires_daily_login: boolean;
           last_reward_claimed_at: string | null;
+          is_active: boolean;
           created_at: string;
           updated_at: string;
           deleted_at: string | null;
@@ -84,6 +85,7 @@ export interface Database {
           remarks?: string | null;
           requires_daily_login?: boolean;
           last_reward_claimed_at?: string | null;
+          is_active?: boolean;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;
@@ -100,6 +102,7 @@ export interface Database {
           remarks?: string | null;
           requires_daily_login?: boolean;
           last_reward_claimed_at?: string | null;
+          is_active?: boolean;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;
@@ -230,6 +233,7 @@ export interface Database {
           remarks: string | null;
           requires_daily_login: boolean;
           last_reward_claimed_at: string | null;
+          is_active: boolean;
           created_at: string;
           updated_at: string;
           deleted_at: string | null;
@@ -259,6 +263,7 @@ export interface Database {
           website_url: string | null;
           tier_id: string | null;
           provider_remarks: string | null;
+          provider_is_active: boolean;
           tier_name: string | null;
           tier_label: string | null;
           tier_color: string | null;

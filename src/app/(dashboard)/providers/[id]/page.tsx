@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Edit, ExternalLink, Gift, Key, Plus, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Edit, ExternalLink, Gift, Key, Plus, MessageSquare, Pause } from 'lucide-react';
 import { getProvider } from '@/actions/providers';
 import { getApiKeysForProvider } from '@/actions/api-keys';
 import { getTier } from '@/actions/tiers';
@@ -43,6 +43,12 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold">{provider.name}</h1>
+            {!provider.is_active && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-zinc-200 px-2 py-1 text-xs font-medium text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
+                <Pause className="h-3 w-3" />
+                Inactive
+              </span>
+            )}
             {tier && (
               <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${tier.color}`}>
                 {tier.label}
@@ -111,6 +117,23 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
             <CardTitle className="text-base">Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
+            <div>
+              <span className="font-medium text-zinc-500 dark:text-zinc-400">
+                Status
+              </span>
+              <p className="mt-1">
+                {provider.is_active ? (
+                  <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/20 dark:text-green-400">
+                    Active
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-zinc-200 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
+                    <Pause className="h-3 w-3" />
+                    Inactive
+                  </span>
+                )}
+              </p>
+            </div>
             {tier && (
               <div>
                 <span className="font-medium text-zinc-500 dark:text-zinc-400">

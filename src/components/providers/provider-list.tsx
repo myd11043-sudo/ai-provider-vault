@@ -1,9 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { CheckSquare, Square, Play, Pause, X } from 'lucide-react';
 import { ProviderCard } from './provider-card';
 import { SearchFilter } from '@/components/ui/search-filter';
+import { Button } from '@/components/ui/button';
+import { bulkUpdateProviderStatus } from '@/actions/providers';
 import type { Provider, Tier } from '@/types';
+
+type StatusFilter = 'all' | 'active' | 'inactive';
 
 interface ProviderListProps {
   providers: Provider[];
@@ -12,6 +17,10 @@ interface ProviderListProps {
 
 export const ProviderList = ({ providers, tiers }: ProviderListProps) => {
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkUpdating, setBulkUpdating] = useState(false);
 
   if (providers.length === 0) {
     return (
@@ -26,9 +35,14 @@ export const ProviderList = ({ providers, tiers }: ProviderListProps) => {
   // Create a map for quick tier lookup
   const tierMap = new Map(tiers.map((t) => [t.id, t]));
 
-  // Filter providers by search term
+  // Filter providers by search term and status
   const searchLower = search.toLowerCase();
   const filteredProviders = providers.filter((p) => {
+    // Status filter
+    if (statusFilter === 'active' && !p.is_active) return false;
+    if (statusFilter === 'inactive' && p.is_active) return false;
+
+    // Search filter
     const tier = p.tier_id ? tierMap.get(p.tier_id) : null;
     return (
       p.name.toLowerCase().includes(searchLower) ||
@@ -37,8 +51,14 @@ export const ProviderList = ({ providers, tiers }: ProviderListProps) => {
     );
   });
 
-  // Sort providers by tier sort_order, then by name
+  // Sort providers: active first, then by tier sort_order, then by name
   const sortedProviders = [...filteredProviders].sort((a, b) => {
+    // Active providers come first (when showing all)
+    if (statusFilter === 'all') {
+      if (a.is_active !== b.is_active) {
+        return a.is_active ? -1 : 1;
+      }
+    }
     const tierA = a.tier_id ? tierMap.get(a.tier_id) : null;
     const tierB = b.tier_id ? tierMap.get(b.tier_id) : null;
     const orderA = tierA?.sort_order ?? 999;
@@ -47,13 +67,146 @@ export const ProviderList = ({ providers, tiers }: ProviderListProps) => {
     return a.name.localeCompare(b.name);
   });
 
+  // Count active and inactive providers
+  const activeCount = providers.filter((p) => p.is_active).length;
+  const inactiveCount = providers.length - activeCount;
+
+  const handleSelectChange = (id: string, selected: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (selected) {
+        next.add(id);
+      } else {
+        next.delete(id);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === sortedProviders.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sortedProviders.map((p) => p.id)));
+    }
+  };
+
+  const handleBulkStatusUpdate = async (isActive: boolean) => {
+    if (selectedIds.size === 0) return;
+    setBulkUpdating(true);
+    await bulkUpdateProviderStatus(Array.from(selectedIds), isActive);
+    setSelectedIds(new Set());
+    setSelectMode(false);
+    setBulkUpdating(false);
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
+
   return (
     <div className="space-y-4">
-      <SearchFilter
-        value={search}
-        onChange={setSearch}
-        placeholder="Search providers by name, tier, or remarks..."
-      />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <SearchFilter
+          value={search}
+          onChange={setSearch}
+          placeholder="Search providers by name, tier, or remarks..."
+        />
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
+          >
+            {selectMode ? (
+              <>
+                <X className="mr-1 h-4 w-4" />
+                Cancel
+              </>
+            ) : (
+              <>
+                <CheckSquare className="mr-1 h-4 w-4" />
+                Select
+              </>
+            )}
+          </Button>
+          <div className="flex items-center gap-1 rounded-lg border border-zinc-200 p-1 dark:border-zinc-800">
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+                statusFilter === 'all'
+                  ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
+                  : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'
+              }`}
+            >
+              All ({providers.length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('active')}
+              className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+                statusFilter === 'active'
+                  ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
+                  : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'
+              }`}
+            >
+              Active ({activeCount})
+            </button>
+            <button
+              onClick={() => setStatusFilter('inactive')}
+              className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+                statusFilter === 'inactive'
+                  ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
+                  : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'
+              }`}
+            >
+              Inactive ({inactiveCount})
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Bulk actions bar */}
+      {selectMode && (
+        <div className="flex items-center justify-between rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-2 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleSelectAll}
+              className="flex items-center gap-2 text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              {selectedIds.size === sortedProviders.length ? (
+                <CheckSquare className="h-4 w-4" />
+              ) : (
+                <Square className="h-4 w-4" />
+              )}
+              {selectedIds.size === sortedProviders.length ? 'Deselect all' : 'Select all'}
+            </button>
+            <span className="text-sm text-zinc-500">
+              {selectedIds.size} selected
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={selectedIds.size === 0 || bulkUpdating}
+              onClick={() => handleBulkStatusUpdate(true)}
+            >
+              <Play className="mr-1 h-4 w-4" />
+              {bulkUpdating ? 'Updating...' : 'Set Active'}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={selectedIds.size === 0 || bulkUpdating}
+              onClick={() => handleBulkStatusUpdate(false)}
+            >
+              <Pause className="mr-1 h-4 w-4" />
+              {bulkUpdating ? 'Updating...' : 'Set Inactive'}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {sortedProviders.length === 0 ? (
         <div className="rounded-lg border border-dashed border-zinc-300 p-8 text-center dark:border-zinc-700">
@@ -68,6 +221,9 @@ export const ProviderList = ({ providers, tiers }: ProviderListProps) => {
               key={provider.id}
               provider={provider}
               tier={provider.tier_id ? tierMap.get(provider.tier_id) : null}
+              selectable={selectMode}
+              selected={selectedIds.has(provider.id)}
+              onSelectChange={(selected) => handleSelectChange(provider.id, selected)}
             />
           ))}
         </div>

@@ -60,7 +60,7 @@ export const RewardItem = ({ provider }: RewardItemProps) => {
                   className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
                 >
                   <ExternalLink className="h-3 w-3" />
-                  Website
+                  {new URL(provider.website_url).hostname.replace(/^www\./, '')}
                 </a>
               )}
               {provider.recharge_url && (

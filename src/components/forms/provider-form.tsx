@@ -146,6 +146,20 @@ export const ProviderForm = ({ provider, tiers }: ProviderFormProps) => {
         </Label>
       </div>
 
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="isActive"
+          name="isActive"
+          defaultChecked={provider?.is_active ?? true}
+        />
+        <Label htmlFor="isActive" className="cursor-pointer">
+          Active
+        </Label>
+        <span className="text-xs text-zinc-500">
+          (Uncheck if provider is on hiatus or shut down)
+        </span>
+      </div>
+
       <div className="flex gap-3">
         <Button type="submit" disabled={pending}>
           {pending ? 'Saving...' : provider ? 'Update Provider' : 'Create Provider'}
