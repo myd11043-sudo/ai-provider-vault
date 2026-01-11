@@ -59,6 +59,7 @@ export const createTier = async (
   const label = formData.get('label') as string;
   const description = formData.get('description') as string;
   const color = formData.get('color') as string;
+  const textColor = formData.get('textColor') as string;
   const sortOrder = parseInt(formData.get('sortOrder') as string) || 0;
 
   if (!name?.trim()) {
@@ -74,7 +75,8 @@ export const createTier = async (
     name: name.trim(),
     label: label.trim(),
     description: description?.trim() || null,
-    color: color || 'bg-zinc-500 text-white',
+    color: color || '#71717a',
+    text_color: textColor || '#ffffff',
     sort_order: sortOrder,
   };
 
@@ -112,6 +114,7 @@ export const updateTier = async (
   const label = formData.get('label') as string;
   const description = formData.get('description') as string;
   const color = formData.get('color') as string;
+  const textColor = formData.get('textColor') as string;
   const sortOrder = parseInt(formData.get('sortOrder') as string) || 0;
 
   if (!id) {
@@ -132,7 +135,8 @@ export const updateTier = async (
       name: name.trim(),
       label: label.trim(),
       description: description?.trim() || null,
-      color: color || 'bg-zinc-500 text-white',
+      color: color || '#71717a',
+      text_color: textColor || '#ffffff',
       sort_order: sortOrder,
     })
     .eq('id', id)
@@ -204,11 +208,11 @@ export const seedDefaultTiers = async (): Promise<ActionResult> => {
   }
 
   const defaultTiers = [
-    { name: 'S', label: 'S Tier', description: 'SOTA models, reliable source, excellent latency, premium quality', color: 'bg-amber-500 text-white', sort_order: 0 },
-    { name: 'A', label: 'A Tier', description: 'Great models, easy credits, source may vary', color: 'bg-purple-500 text-white', sort_order: 1 },
-    { name: 'B', label: 'B Tier', description: 'Good models, may lack SOTA or recharge options', color: 'bg-blue-500 text-white', sort_order: 2 },
-    { name: 'C', label: 'C Tier', description: 'Basic functionality, limited model selection', color: 'bg-zinc-500 text-white', sort_order: 3 },
-    { name: 'D', label: 'D Tier', description: 'Minimal features, use as backup only', color: 'bg-zinc-400 text-white', sort_order: 4 },
+    { name: 'S', label: 'S Tier', description: 'SOTA models, reliable source, excellent latency, premium quality', color: '#f59e0b', text_color: '#ffffff', sort_order: 0 },
+    { name: 'A', label: 'A Tier', description: 'Great models, easy credits, source may vary', color: '#a855f7', text_color: '#ffffff', sort_order: 1 },
+    { name: 'B', label: 'B Tier', description: 'Good models, may lack SOTA or recharge options', color: '#3b82f6', text_color: '#ffffff', sort_order: 2 },
+    { name: 'C', label: 'C Tier', description: 'Basic functionality, limited model selection', color: '#71717a', text_color: '#ffffff', sort_order: 3 },
+    { name: 'D', label: 'D Tier', description: 'Minimal features, use as backup only', color: '#a1a1aa', text_color: '#ffffff', sort_order: 4 },
   ];
 
   const { error } = await supabase

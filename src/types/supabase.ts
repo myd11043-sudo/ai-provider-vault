@@ -6,17 +6,6 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-// Default tier colors for UI
-export const DEFAULT_TIER_COLORS = [
-  { name: 'Gold', value: 'bg-amber-500 text-white' },
-  { name: 'Purple', value: 'bg-purple-500 text-white' },
-  { name: 'Blue', value: 'bg-blue-500 text-white' },
-  { name: 'Green', value: 'bg-green-500 text-white' },
-  { name: 'Red', value: 'bg-red-500 text-white' },
-  { name: 'Gray', value: 'bg-zinc-500 text-white' },
-  { name: 'Light Gray', value: 'bg-zinc-400 text-white' },
-];
-
 export interface Database {
   public: {
     Tables: {
@@ -28,6 +17,7 @@ export interface Database {
           label: string;
           description: string | null;
           color: string;
+          text_color: string;
           sort_order: number;
           created_at: string;
           updated_at: string;
@@ -39,6 +29,7 @@ export interface Database {
           label: string;
           description?: string | null;
           color?: string;
+          text_color?: string;
           sort_order?: number;
           created_at?: string;
           updated_at?: string;
@@ -50,6 +41,7 @@ export interface Database {
           label?: string;
           description?: string | null;
           color?: string;
+          text_color?: string;
           sort_order?: number;
           created_at?: string;
           updated_at?: string;

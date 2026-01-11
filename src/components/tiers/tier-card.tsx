@@ -32,7 +32,10 @@ export const TierCard = ({ tier }: TierCardProps) => {
     <Card className="group relative">
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
         <div className="flex items-center gap-3">
-          <div className={`flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold ${tier.color}`}>
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold"
+            style={{ backgroundColor: tier.color, color: tier.text_color }}
+          >
             {tier.name}
           </div>
           <div>
