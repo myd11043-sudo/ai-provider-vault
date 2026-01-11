@@ -25,7 +25,15 @@ export const getApiKeysForProvider = async (providerId: string): Promise<ApiKey[
   return (data as ApiKey[]) || [];
 };
 
-export const getAllApiKeys = async (): Promise<(ApiKey & { provider_name: string })[]> => {
+export interface ApiKeyWithProvider extends ApiKey {
+  provider_name: string;
+  provider_id: string;
+  tier_id: string | null;
+  tier_name: string | null;
+  tier_color: string | null;
+}
+
+export const getAllApiKeys = async (): Promise<ApiKeyWithProvider[]> => {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -43,22 +51,47 @@ export const getAllApiKeys = async (): Promise<(ApiKey & { provider_name: string
     return [];
   }
 
-  // Get provider names
+  // Get provider info with tiers
   const typedKeys = apiKeys as ApiKey[];
   const providerIds = [...new Set(typedKeys.map((k) => k.provider_id))];
   const { data: providers } = await supabase
     .from('providers')
-    .select('id, name')
+    .select('id, name, tier_id')
     .in('id', providerIds);
 
+  // Get tier info
+  const tierIds = [...new Set(
+    (providers as { id: string; name: string; tier_id: string | null }[] | null)
+      ?.filter((p) => p.tier_id)
+      .map((p) => p.tier_id!) || []
+  )];
+
+  let tierMap = new Map<string, { name: string; color: string }>();
+  if (tierIds.length > 0) {
+    const { data: tiers } = await supabase
+      .from('tiers')
+      .select('id, name, color')
+      .in('id', tierIds);
+    tierMap = new Map(
+      (tiers as { id: string; name: string; color: string }[] | null)?.map((t) => [t.id, { name: t.name, color: t.color }]) || []
+    );
+  }
+
   const providerMap = new Map(
-    (providers as { id: string; name: string }[] | null)?.map((p) => [p.id, p.name]) || []
+    (providers as { id: string; name: string; tier_id: string | null }[] | null)?.map((p) => [p.id, p]) || []
   );
 
-  return typedKeys.map((key) => ({
-    ...key,
-    provider_name: providerMap.get(key.provider_id) || 'Unknown',
-  }));
+  return typedKeys.map((key) => {
+    const provider = providerMap.get(key.provider_id);
+    const tier = provider?.tier_id ? tierMap.get(provider.tier_id) : null;
+    return {
+      ...key,
+      provider_name: provider?.name || 'Unknown',
+      tier_id: provider?.tier_id || null,
+      tier_name: tier?.name || null,
+      tier_color: tier?.color || null,
+    };
+  });
 };
 
 export const storeApiKey = async (

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Edit, ExternalLink, Gift, Key, Plus, MessageSquare, Pause } from 'lucide-react';
+import { ArrowLeft, Edit, ExternalLink, Gift, Key, MessageSquare, Pause } from 'lucide-react';
 import { getProvider } from '@/actions/providers';
 import { getApiKeysForProvider } from '@/actions/api-keys';
 import { getTier } from '@/actions/tiers';
@@ -50,7 +50,10 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
               </span>
             )}
             {tier && (
-              <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ${tier.color}`}>
+              <span
+                className="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium"
+                style={{ backgroundColor: tier.color, color: tier.text_color }}
+              >
                 {tier.label}
               </span>
             )}
@@ -64,7 +67,7 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
                 className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
               >
                 <ExternalLink className="h-3 w-3" />
-                Website
+                {new URL(provider.website_url).hostname.replace(/^www\./, '')}
               </a>
             )}
             {provider.main_thread_url && (
@@ -205,17 +208,11 @@ export default async function ProviderPage({ params }: ProviderPageProps) {
 
       {/* API Keys Section */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Key className="h-4 w-4" />
             API Keys
           </CardTitle>
-          <Button size="sm" asChild>
-            <Link href={`/providers/${id}?addKey=true`}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Key
-            </Link>
-          </Button>
         </CardHeader>
         <CardContent>
           <ApiKeyList apiKeys={apiKeys} providerId={id} />

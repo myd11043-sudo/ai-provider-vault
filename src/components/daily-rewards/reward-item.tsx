@@ -45,7 +45,10 @@ export const RewardItem = ({ provider }: RewardItemProps) => {
                   {provider.name}
                 </Link>
                 {provider.tier && (
-                  <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium ${provider.tier.color}`}>
+                  <span
+                    className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium"
+                    style={{ backgroundColor: provider.tier.color, color: provider.tier.text_color }}
+                  >
                     {provider.tier.name}
                   </span>
                 )}

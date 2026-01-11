@@ -72,7 +72,10 @@ export const ProviderCard = ({ provider, tier, selectable, selected, onSelectCha
                 </span>
               )}
               {tier && (
-                <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium ${tier.color}`}>
+                <span
+                  className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium"
+                  style={{ backgroundColor: tier.color, color: tier.text_color }}
+                >
                   {tier.name}
                 </span>
               )}

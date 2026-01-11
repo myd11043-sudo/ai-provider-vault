@@ -42,13 +42,13 @@ export default async function HomePage() {
           Store, manage, and organize your API keys from OpenAI, Anthropic, Google AI,
           and other providers. All encrypted at rest with Supabase Vault.
         </p>
-        <div className="mt-10">
-          <Button size="lg" asChild>
-            <Link href={user ? '/providers' : '/login'}>
-              {user ? 'Go to Dashboard' : 'Sign in'}
-            </Link>
-          </Button>
-        </div>
+        {!user && (
+          <div className="mt-10">
+            <Button size="lg" asChild>
+              <Link href="/login">Get Started</Link>
+            </Button>
+          </div>
+        )}
       </section>
 
       {/* Features */}

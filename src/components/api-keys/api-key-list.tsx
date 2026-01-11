@@ -1,8 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
 import { ApiKeyCard } from './api-key-card';
 import { ApiKeyForm } from '@/components/forms/api-key-form';
 import { Button } from '@/components/ui/button';
@@ -15,14 +13,7 @@ interface ApiKeyListProps {
 }
 
 export const ApiKeyList = ({ apiKeys, providerId }: ApiKeyListProps) => {
-  const searchParams = useSearchParams();
   const [showForm, setShowForm] = useState(false);
-
-  useEffect(() => {
-    if (searchParams.get('addKey') === 'true') {
-      setShowForm(true);
-    }
-  }, [searchParams]);
 
   if (apiKeys.length === 0 && !showForm) {
     return (
